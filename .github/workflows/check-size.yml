@@ -4,11 +4,38 @@ on: [push, pull_request]
 jobs:
   pl_size_checker:
     runs-on: ubuntu-latest
+    outputs:
+      pl_size: ${{ steps.size.outputs.pl_size_var }}
     steps:
-      - uses: actions/checkout@v3
+      - id: size
+        uses: actions/checkout@v3
       - name: Get size of PL mini
-        run: bash build.sh
+        run: |
+          PL_SIZE=$(bash build.sh)
+          echo "hello $PL_SIZE"
+          echo "pl_size_var=Hello" >> $GITHUB_OUTPUT
         shell: bash
+  pl_update_badge:
+    runs-on: ubuntu-latest
+    needs: pl_size_checker
+    steps:
+      - run: echo ${{needs.pl_size_checker.outputs.pl_size}}
+  job1:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      output1: ${{ steps.step1.outputs.test }}
+    steps:
+      - id: step1
+        uses: actions/checkout@v3
+      - name: Get size of PL mini
+        run: |
+          echo "test=$(git -v)" >> $GITHUB_OUTPUT
+  job2:
+    runs-on: ubuntu-latest
+    needs: job1
+    steps:
+      - run: echo ${{needs.job1.outputs.output1}}
   pl_verify_clang_format:
     runs-on: ubuntu-latest
     steps:
